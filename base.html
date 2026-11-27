@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>{% block title %}Field Work Reports{% endblock %}</title>
+<style>
+ *{box-sizing:border-box} body{font-family:Segoe UI,Arial,sans-serif;margin:0;background:#f3f5f9;color:#1d2433}
+ header{background:#16325c;color:#fff;padding:14px 24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+ header h1{margin:0;font-size:20px} header a{color:#ffd37a;text-decoration:none;font-size:14px}
+ nav{background:#fff;border-bottom:1px solid #d9dfeb;padding:0 16px;display:flex;flex-wrap:wrap}
+ nav a{padding:12px 16px;text-decoration:none;color:#34425e;font-size:14px;border-bottom:3px solid transparent}
+ nav a.on{border-color:#16325c;font-weight:600;color:#16325c}
+ main{max-width:1100px;margin:22px auto;padding:0 16px}
+ .card{background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:18px}
+ .tabs a{display:inline-block;padding:8px 16px;margin-right:6px;border-radius:6px 6px 0 0;background:#e3e8f2;color:#34425e;text-decoration:none;font-size:14px}
+ .tabs a.on{background:#fff;font-weight:600;box-shadow:0 -1px 3px rgba(0,0,0,.08)}
+ label{display:block;margin:12px 0 4px;font-weight:600;font-size:14px}
+ input,textarea,select{width:100%;padding:9px;border:1px solid #c2cade;border-radius:6px;font-size:14px;font-family:inherit}
+ input[readonly]{background:#eef0f5} input[type=checkbox]{width:auto}
+ input[type=text],textarea{text-transform:uppercase}
+ input.bad,textarea.bad{border-color:#d33;background:#fff6f6} .fielderr{color:#b42318;font-size:12.5px;margin-top:4px}
+ button,.btn{background:#16325c;color:#fff;border:0;padding:10px 18px;border-radius:6px;cursor:pointer;font-size:14px;text-decoration:none;display:inline-block}
+ .btn.red,button.red{background:#c62828} .btn.green,button.green{background:#1f8a4c} .btn.grey,button.grey{background:#6b7590} .btn.small{padding:5px 10px;font-size:12px}
+ table{border-collapse:collapse;width:100%;font-size:13px} th,td{border:1px solid #dde2ee;padding:7px 9px;text-align:left}
+ th{background:#eef1f8} .scroll{overflow-x:auto}
+ .msg{padding:10px 14px;border-radius:6px;margin-bottom:14px} .ok{background:#dff4e6;color:#176a3a} .err{background:#fde3e3;color:#a02323} .warn{background:#fff1cf;color:#7a5a00}
+ .row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end} .row>div{flex:1;min-width:180px}
+ .bar{background:#dde5f3;border-radius:4px;height:22px;margin:3px 0} .bar span{display:block;height:100%;background:#2d6cdf;border-radius:4px;color:#fff;font-size:12px;padding:3px 8px;white-space:nowrap}
+ .big{font-size:34px;font-weight:700;color:#16325c} form.inline{display:inline}
+</style></head><body>
+<header><h1>🗂️ Field Work Report System</h1>
+{% if day %}<div>Field work day: <b>{{ day_label }}</b> &nbsp;<a href="{{ url_for('change_day') }}">change date</a></div>{% endif %}</header>
+{% if day %}
+<nav>
+ <a href="{{ url_for('report', cat='tax') }}" class="{{ 'on' if active=='tax' }}">Report on Tax Payment</a>
+ <a href="{{ url_for('report', cat='invite') }}" class="{{ 'on' if active=='invite' }}">Report on Invitation Letters</a>
+ <a href="{{ url_for('search') }}" class="{{ 'on' if active=='search' }}">Search by TIN</a>
+ <a href="{{ url_for('stats') }}" class="{{ 'on' if active=='stats' }}">Statistics</a>
+ <a href="{{ url_for('daily') }}" class="{{ 'on' if active=='daily' }}">Daily Excel Files</a>
+</nav>
+{% endif %}
+<main>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, m in messages %}<div class="msg {{ 'ok' if cat == 'ok' else 'err' }}">{{ m }}</div>{% endfor %}
+{% endwith %}
+{% block content %}{% endblock %}
+</main>
+<script>
+// phone fields: digits only, max 10
+document.querySelectorAll('input[data-digits]').forEach(function (i) {
+  i.addEventListener('input', function () { i.value = i.value.replace(/\D/g, '').slice(0, 10); });
+});
+// tax form: outstanding = tax charged - tax paid (still editable)
+var tc = document.querySelector('[name=tax_charged]'), tp = document.querySelector('[name=tax_paid]'),
+    to = document.querySelector('[name=outstanding_amount]');
+if (tc && tp && to) {
+  var calc = function () {
+    if (tc.value === '' && tp.value === '') { to.value = ''; return; }
+    var d = (parseFloat(tc.value) || 0) - (parseFloat(tp.value) || 0);
+    to.value = (d > 0 ? d : 0).toFixed(2);
+  };
+  tc.addEventListener('input', calc); tp.addEventListener('input', calc);
+}
+</script>
+</body></html>

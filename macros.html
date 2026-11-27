@@ -1,0 +1,47 @@
+{% macro records_table(cat, cfg, rows, edit_links=False, back_tin='') %}
+<div class="scroll"><table>
+<tr><th>No.</th><th>Field Day</th>{% for k, l, t in cfg.fields %}<th>{{ l }}</th>{% endfor %}<th>Last Updated</th>{% if edit_links %}<th></th>{% endif %}</tr>
+{% for r in rows %}
+<tr><td>{{ loop.index }}</td><td>{{ r.field_date }}</td>
+{% for k, l, t in cfg.fields %}<td>{% if t == 'money' %}{{ '{:,.2f}'.format(r[k]|float) }}{% else %}{{ r[k]|upper }}{% endif %}</td>{% endfor %}
+<td>{{ r.updated_at }}</td>
+{% if edit_links %}
+<td style="white-space:nowrap">
+  <a class="btn small" href="{{ url_for('report', cat=cat, tab='edit', id=r.id, tin=back_tin or None) }}">Edit</a>
+  <form method="post" class="inline" action="{{ url_for('report', cat=cat, tab='edit', tin=back_tin or None) }}"
+        onsubmit='return confirm({{ ("Delete the record of " ~ r.taxpayer_name|upper ~ " (" ~ r.tin|upper ~ ")? This cannot be undone.")|tojson }})'>
+    <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="{{ r.id }}">
+    <button class="btn small red">🗑 Delete</button>
+  </form>
+</td>
+{% endif %}
+</tr>
+{% endfor %}
+</table></div>
+{% endmacro %}
+
+{% macro inputs(cfg, vals, errors) %}
+{% for k, label, kind in cfg.fields %}
+  {% set val = vals.get(k, '') %}
+  {% set bad = 'bad' if k in errors else '' %}
+  <label>{{ label }}</label>
+  {% if k == 'phone' %}
+    <input type="text" class="{{ bad }}" name="phone" value="{{ val }}" inputmode="numeric" maxlength="10" pattern="[0-9]{10}" data-digits="1" placeholder="e.g. 0241234567" title="Exactly 10 digits, numbers only" required>
+  {% elif k == 'tin' %}
+    <input type="text" class="{{ bad }}" name="tin" value="{{ val }}" maxlength="17" pattern="{{ TIN_HTML_PATTERN }}" placeholder="e.g. GHA-123456789-0" title="Enter a valid Ghana Card number, e.g. GHA-123456789-0" required>
+  {% elif k in ['taxpayer_name', 'person_served', 'nature_of_business'] %}
+    <input type="text" class="{{ bad }}" name="{{ k }}" value="{{ val }}" minlength="2" maxlength="100" required>
+  {% elif kind == 'money' %}
+    <input type="number" class="{{ bad }}" step="0.01" min="0" max="999999999999.99" name="{{ k }}" value="{{ val }}" {{ '' if k == 'tax_paid' else 'required' }}>
+  {% elif kind == 'longtext' %}
+    <textarea class="{{ bad }}" name="{{ k }}" rows="3" maxlength="500">{{ val }}</textarea>
+  {% elif kind == 'fixed' %}
+    <input type="text" value="{{ val or 'INVITATION LETTER' }}" readonly>
+  {% elif kind == 'date' %}
+    <input type="date" class="{{ bad }}" name="{{ k }}" value="{{ val }}" {% if k != 'report_date' %}max="{{ today_str() }}"{% endif %} required>
+  {% elif kind == 'time' %}
+    <input type="time" class="{{ bad }}" name="{{ k }}" value="{{ val }}" required>
+  {% endif %}
+  {% if k in errors %}<div class="fielderr">⚠ {{ errors[k] }}</div>{% endif %}
+{% endfor %}
+{% endmacro %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>📁 Combined Daily Excel Files</h2>
+<div class="card">
+  <p>Each field work day has ONE Excel file containing a sheet for tax payments and a sheet for invitation letters.
+     It is generated from the saved records every time you download it, so it is always up to date.</p>
+  <p><a class="btn green" href="{{ url_for('daily_download', d=day) }}">⬇️ Download file for {{ day }}</a></p>
+  <h3>All field work days</h3>
+  {% if not days %}<div class="msg warn">No records saved yet.</div>{% else %}
+  <table><tr><th>Day</th><th>Tax payment records</th><th>Invitation letters</th><th></th></tr>
+  {% for d, c in days %}
+    <tr><td>{{ d }}</td><td>{{ c.tax }}</td><td>{{ c.invite }}</td>
+        <td><a class="btn small" href="{{ url_for('daily_download', d=d) }}">Download</a></td></tr>
+  {% endfor %}</table>{% endif %}
+</div>
+{% endblock %}

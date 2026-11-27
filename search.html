@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block content %}
+<h2>🔍 Search Records</h2>
+<div class="card">
+  <form method="get" action="{{ url_for('search') }}" class="row">
+    <div><label>Enter TIN (full or partial)</label><input type="text" name="tin" value="{{ tin }}" required></div>
+    <div><button>Search</button></div>
+  </form>
+</div>
+{% for cat, cfg, rows in results %}
+<div class="card"><h3>{{ cfg.title }}</h3>
+  {{ m.records_table(cat, cfg, rows) }}
+  <p><a class="btn green" href="{{ url_for('search_download', cat=cat, tin=tin) }}">⬇️ Download {{ cfg.sheet }} (Excel)</a></p>
+</div>
+{% endfor %}
+{% if tin and not results %}<div class="msg warn">No record matches that TIN.</div>{% endif %}
+{% endblock %}

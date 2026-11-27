@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card" style="max-width:480px;margin:40px auto">
+  <h2>📅 Select the field work date</h2>
+  <p>Choose the day of the field work on the calendar before entering any details.</p>
+  <form method="post" action="{{ url_for('set_day') }}">
+    <input type="date" name="field_day" value="{{ default_day }}" required>
+    <p><button type="submit">Continue</button></p>
+  </form>
+</div>
+{% endblock %}

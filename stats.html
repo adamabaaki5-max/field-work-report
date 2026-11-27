@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>📊 Taxpayer Registration Statistics</h2>
+<div class="card"><div class="row">
+  <div>Total taxpayers registered<div class="big">{{ total }}</div></div>
+  <div>Tax payment records<div class="big">{{ tax_n }}</div></div>
+  <div>Invitation letter records<div class="big">{{ inv_n }}</div></div>
+</div></div>
+<div class="tabs">
+  {% for p in ['daily', 'weekly', 'monthly', 'yearly'] %}
+  <a href="{{ url_for('stats', period=p) }}" class="{{ 'on' if period == p }}">{{ p|capitalize }}</a>
+  {% endfor %}
+</div>
+<div class="card">
+  {% if not counts %}<div class="msg warn">No data yet.</div>{% endif %}
+  {% for label, n in counts.items() %}
+  <div style="display:flex;gap:10px;align-items:center">
+    <div style="width:110px;font-size:13px">{{ label }}</div>
+    <div class="bar" style="flex:1"><span style="width:{{ [4, (n / max_count * 100)|round|int]|max }}%">{{ n }}</span></div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

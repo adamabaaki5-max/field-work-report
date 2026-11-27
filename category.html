@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}{{ cfg.title }}{% endblock %}
+{% block content %}
+<h2>{{ cfg.title }}</h2>
+<div class="tabs">
+  <a href="{{ url_for('report', cat=cat, tab='add') }}" class="{{ 'on' if tab=='add' }}">➕ Add Record</a>
+  <a href="{{ url_for('report', cat=cat, tab='view') }}" class="{{ 'on' if tab=='view' }}">📄 View / Download</a>
+  <a href="{{ url_for('report', cat=cat, tab='edit') }}" class="{{ 'on' if tab=='edit' }}">✏️ Edit Record</a>
+</div>
+<div class="card">
+{% if errors %}<div class="msg err">⚠ Please correct the {{ errors|length }} highlighted field(s) below. Nothing has been saved.</div>{% endif %}
+
+{# ---------------- ADD ---------------- #}
+{% if tab == 'add' %}
+  {% if pending %}
+    <h3>Please confirm the details</h3>
+    <table>
+    {% for k, l, t in cfg.fields %}
+      <tr><th style="width:35%">{{ l }}</th><td>{% if t == 'money' %}{{ '{:,.2f}'.format(pending[k]|float) }}{% else %}{{ pending[k] }}{% endif %}</td></tr>
+    {% endfor %}
+    </table>
+    <p>
+      <form method="post" class="inline" action="{{ url_for('report', cat=cat, tab='add') }}"><input type="hidden" name="action" value="save"><button class="green">✅ Confirm &amp; Save</button></form>
+      <form method="post" class="inline" action="{{ url_for('report', cat=cat, tab='add') }}"><input type="hidden" name="action" value="back"><button class="grey">✏️ Change details</button></form>
+    </p>
+  {% else %}
+    <form method="post" action="{{ url_for('report', cat=cat, tab='add') }}">
+      <input type="hidden" name="action" value="review">
+      {{ m.inputs(cfg, defaults, errors) }}
+      <p><button type="submit">Review</button></p>
+    </form>
+  {% endif %}
+
+{# ---------------- VIEW ---------------- #}
+{% elif tab == 'view' %}
+  <form method="get" action="{{ url_for('report', cat=cat) }}" class="row">
+    <input type="hidden" name="tab" value="view">
+    <div><label>TIN (leave blank to show ALL taxpayers)</label><input type="text" name="tin" value="{{ tin_q }}"></div>
+    <div><label><input type="checkbox" name="onlyday" value="1" {{ 'checked' if only }}> Only this field work date</label></div>
+    <div><button type="submit">Show</button></div>
+  </form><br>
+  {% if not rows %}
+    <div class="msg warn">No records found.</div>
+  {% else %}
+    {{ m.records_table(cat, cfg, rows) }}
+    <p>{{ rows|length }} record(s) &nbsp;
+      <a class="btn green" href="{{ url_for('download', cat=cat, tin=tin_q or None, onlyday=1 if only else None) }}">⬇️ Download as Excel</a></p>
+  {% endif %}
+
+{# ---------------- EDIT ---------------- #}
+{% else %}
+  <form method="get" action="{{ url_for('report', cat=cat) }}" class="row">
+    <input type="hidden" name="tab" value="edit">
+    <div><label>Search record by TIN (blank = list all)</label><input type="text" name="tin" value="{{ tin_q }}"></div>
+    <div><button type="submit">Search</button></div>
+  </form><br>
+  {% if rec %}
+    <h3>Editing: {{ rec.taxpayer_name|upper }} ({{ rec.tin|upper }})</h3>
+    <form method="post" action="{{ url_for('report', cat=cat, tab='edit', id=rec.id, tin=tin_q or None) }}">
+      <input type="hidden" name="action" value="update"><input type="hidden" name="id" value="{{ rec.id }}">
+      {{ m.inputs(cfg, edit_vals, errors) }}
+      <p><button type="submit">💾 Update Record</button></p>
+    </form>
+    <form method="post" action="{{ url_for('report', cat=cat, tab='edit', tin=tin_q or None) }}"
+          onsubmit='return confirm({{ ("Delete the record of " ~ rec.taxpayer_name|upper ~ " (" ~ rec.tin|upper ~ ")? This cannot be undone.")|tojson }})'>
+      <input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="{{ rec.id }}">
+      <button class="red">🗑 Delete this record</button>
+    </form><hr>
+  {% endif %}
+  {% if rows %}{{ m.records_table(cat, cfg, rows, True, tin_q) }}{% else %}<div class="msg warn">No records found.</div>{% endif %}
+{% endif %}
+</div>
+{% endblock %}
